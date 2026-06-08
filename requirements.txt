@@ -1,0 +1,13 @@
+# SecureFace-RX 의존성 (SRS §2.5 기준)
+# conda create -n securefacerx python=3.10
+# pip install -r requirements.txt
+
+torch==2.0.1
+torchvision==0.15.2
+numpy==1.23.5
+opencv-python==4.10.0.84
+kornia==0.7.4
+pycryptodome==3.21.0
+ultralytics>=8.0.0          # YOLOv8-face (yolov8n-face.pt)
+lpips==0.1.4
+Pillow>=9.0.0

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SecureFace-RX — 복원 결과</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    header h1 { font-size: 16px; font-weight: 700; color: #58a6ff; }
+    .badge-ok {
+      background: #238636; color: #fff;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 12px;
+    }
+
+    .container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 20px;
+    }
+
+    .compare {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      width: 100%;
+      max-width: 860px;
+    }
+
+    .img-box {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .img-box .label {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      border-bottom: 1px solid #30363d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .img-box.protected .label { color: #f0883e; }
+    .img-box.restored  .label { color: #3fb950; }
+    .img-box img {
+      width: 100%;
+      display: block;
+    }
+    .img-box .empty {
+      height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #484f58;
+      font-size: 14px;
+    }
+
+    /* 로딩 스피너 */
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .loading-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #8b949e;
+      font-size: 14px;
+      padding: 60px 0;
+    }
+
+    .info-bar {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 12px 20px;
+      font-size: 12px;
+      color: #8b949e;
+      text-align: center;
+      max-width: 860px;
+      width: 100%;
+    }
+    .info-bar b { color: #e6edf3; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SecureFace-RX</h1>
+  <span class="badge-ok">복원 결과</span>
+  <span style="color:#484f58; font-size:12px; margin-left:auto;">
+    이 창은 권한자만 접근 가능한 복원 화면입니다
+  </span>
+</header>
+
+<div class="container">
+
+  <div id="loading" class="loading-box">
+    <div class="spinner"></div>
+    <span>복원 결과를 불러오는 중...</span>
+  </div>
+
+  <div id="content" style="display:none; width:100%; max-width:860px; display:none; flex-direction:column; gap:16px; align-items:center;">
+
+    <div class="compare">
+      <!-- 보호본 -->
+      <div class="img-box protected">
+        <div class="label">🔒 보호본 (ŷ) — 블러처럼 보임</div>
+        <div class="empty" id="prot-empty">없음</div>
+        <img id="prot-img" style="display:none" alt="보호본">
+      </div>
+      <!-- 복원본 -->
+      <div class="img-box restored">
+        <div class="label">🔓 복원본 — 원본 그대로</div>
+        <div class="empty" id="rest-empty">없음</div>
+        <img id="rest-img" style="display:none" alt="복원본">
+      </div>
+    </div>
+
+    <div class="info-bar" id="info-bar">
+      올바른 비밀번호로 복원된 결과입니다.
+      보호본은 블러처럼 보이지만 원본 정보가 숨겨져 있습니다.
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  function load() {
+    fetch("/result_data")
+      .then(r => r.json())
+      .then(d => {
+        document.getElementById("loading").style.display = "none";
+        const content = document.getElementById("content");
+        content.style.display = "flex";
+
+        if (d.protected) {
+          document.getElementById("prot-img").src = d.protected;
+          document.getElementById("prot-img").style.display = "block";
+          document.getElementById("prot-empty").style.display = "none";
+        }
+        if (d.restored) {
+          document.getElementById("rest-img").src = d.restored;
+          document.getElementById("rest-img").style.display = "block";
+          document.getElementById("rest-empty").style.display = "none";
+        }
+        if (d.status) {
+          document.getElementById("info-bar").textContent = d.status;
+        }
+      })
+      .catch(() => setTimeout(load, 1000));
+  }
+
+  load();
+</script>
+
+</body>
+</html>
