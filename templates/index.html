@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>SecureFace-RX 관제 화면</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    header h1 { font-size: 18px; font-weight: 700; color: #58a6ff; }
+    .badge-live {
+      background: #b91c1c; color: #fff;
+      font-size: 11px; font-weight: 700;
+      padding: 2px 9px; border-radius: 12px;
+      animation: blink 1.4s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
+    .sub { color: #484f58; font-size: 13px; margin-left: auto; }
+
+    .main {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      gap: 16px;
+      padding: 16px 24px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* 영상 */
+    .video-wrap {
+      position: relative;
+      background: #000;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .video-wrap img { width: 100%; display: block; }
+    .vid-label {
+      position: absolute; top: 10px; left: 12px;
+      background: rgba(0,0,0,.65);
+      color: #f0883e; font-size: 12px; font-weight: 600;
+      padding: 3px 10px; border-radius: 6px;
+    }
+    .face-badge {
+      position: absolute; top: 10px; right: 12px;
+      background: rgba(35,134,54,.85);
+      color: #fff; font-size: 12px;
+      padding: 3px 10px; border-radius: 6px;
+    }
+
+    /* 패널 */
+    .panel { display: flex; flex-direction: column; gap: 14px; }
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .card h3 {
+      font-size: 11px; font-weight: 700;
+      color: #8b949e; text-transform: uppercase;
+      letter-spacing: .6px; margin-bottom: 12px;
+    }
+
+    /* 상태 */
+    .status-row { display: flex; align-items: center; gap: 8px; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #238636; flex-shrink: 0;
+    }
+    .dot.busy { background: #f0883e; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    #status-text { font-size: 13px; color: #e6edf3; }
+
+    /* 비밀번호 입력 */
+    label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 6px; }
+    input[type="password"] {
+      width: 100%; background: #0d1117;
+      border: 1px solid #30363d; border-radius: 6px;
+      color: #e6edf3; padding: 9px 12px; font-size: 14px;
+      outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: #58a6ff; }
+
+    /* 버튼 */
+    .btn {
+      width: 100%; padding: 11px; border: none;
+      border-radius: 7px; font-size: 14px; font-weight: 600;
+      cursor: pointer; transition: opacity .2s, transform .1s;
+      margin-top: 10px;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { opacity: .35; cursor: not-allowed; }
+    .btn-protect { background: #f0883e; color: #fff; }
+    .btn-restore { background: #238636; color: #fff; }
+
+    /* 안내 */
+    .step-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .step-list li {
+      display: flex; gap: 10px; align-items: flex-start;
+      font-size: 12px; color: #8b949e; line-height: 1.5;
+    }
+    .step-num {
+      background: #21262d; color: #58a6ff;
+      font-size: 11px; font-weight: 700;
+      width: 20px; height: 20px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; margin-top: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>SecureFace-RX</h1>
+  <span class="badge-live">● LIVE</span>
+  <span class="sub">비밀키 기반 가역 얼굴 익명화 관제 시스템</span>
+</header>
+
+<div class="main">
+
+  <!-- 왼쪽: 라이브 피드 -->
+  <div>
+    <div class="video-wrap">
+      <img src="/video_feed" alt="라이브 피드">
+      <span class="vid-label">🔒 보호된 화면 송출 중</span>
+      <span class="face-badge" id="face-badge">얼굴 0개 감지</span>
+    </div>
+  </div>
+
+  <!-- 오른쪽: 제어 패널 -->
+  <div class="panel">
+
+    <!-- 상태 -->
+    <div class="card">
+      <h3>시스템 상태</h3>
+      <div class="status-row">
+        <div class="dot" id="dot"></div>
+        <span id="status-text">초기화 중...</span>
+      </div>
+    </div>
+
+    <!-- 보호 캡처 -->
+    <div class="card">
+      <h3>보호 캡처</h3>
+      <label>비밀번호 설정</label>
+      <input type="password" id="pw-protect" placeholder="비밀번호 입력" value="0">
+      <button class="btn btn-protect" id="btn-protect" onclick="doProtect()">
+        🔒 현재 화면 보호 캡처
+      </button>
+    </div>
+
+    <!-- 복원 -->
+    <div class="card">
+      <h3>복원 (권한자 전용)</h3>
+      <label>비밀번호 입력</label>
+      <input type="password" id="pw-restore" placeholder="비밀번호 입력" value="0">
+      <button class="btn btn-restore" id="btn-restore" onclick="doRestore()">
+        🔓 복원하여 새 창으로 보기
+      </button>
+    </div>
+
+    <!-- 사용 방법 -->
+    <div class="card">
+      <h3>사용 방법</h3>
+      <ul class="step-list">
+        <li>
+          <span class="step-num">1</span>
+          <span>라이브 화면에 얼굴이 실시간으로 <b>블러 처리</b>되어 송출됩니다</span>
+        </li>
+        <li>
+          <span class="step-num">2</span>
+          <span>비밀번호 설정 후 <b>보호 캡처</b>를 누르면 INN이 현재 프레임을 보호합니다</span>
+        </li>
+        <li>
+          <span class="step-num">3</span>
+          <span>권한자가 같은 비밀번호로 <b>복원</b>을 누르면 새 창에서 원본을 확인할 수 있습니다</span>
+        </li>
+        <li>
+          <span class="step-num">!</span>
+          <span>틀린 비밀번호로 복원하면 노이즈만 출력됩니다</span>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // 상태 폴링
+  setInterval(() => {
+    fetch("/status").then(r => r.json()).then(d => {
+      document.getElementById("face-badge").textContent = `얼굴 ${d.face_count}개 감지`;
+      document.getElementById("status-text").textContent = d.status;
+      document.getElementById("dot").className = "dot" + (d.processing ? " busy" : "");
+      const busy = d.processing;
+      document.getElementById("btn-protect").disabled = busy;
+      document.getElementById("btn-restore").disabled = busy || !d.has_psf;
+    }).catch(() => {});
+  }, 800);
+
+  function doProtect() {
+    const pw = document.getElementById("pw-protect").value || "0";
+    fetch("/protect", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({password: pw})
+    }).then(r => r.json()).then(d => {
+      if (!d.ok) alert(d.msg);
+    });
+  }
+
+  function doRestore() {
+    const pw = document.getElementById("pw-restore").value || "0";
+    // 복원 요청
+    fetch("/restore", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({password: pw})
+    }).then(r => r.json()).then(d => {
+      if (!d.ok) { alert(d.msg); return; }
+      // 처리 완료 대기 후 새 창 열기
+      waitAndOpen();
+    });
+  }
+
+  function waitAndOpen() {
+    const check = setInterval(() => {
+      fetch("/status").then(r => r.json()).then(d => {
+        if (!d.processing) {
+          clearInterval(check);
+          window.open("/view", "_blank", "width=800,height=650");
+        }
+      });
+    }, 600);
+  }
+</script>
+
+</body>
+</html>
